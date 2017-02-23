@@ -6,3 +6,6 @@ authors = ["jvaemape <jvaemape@163.com>"]
 [dependencies]
 gtk = { git = "https://github.com/gtk-rs/gtk.git" }
 curl = { git = "https://github.com/alexcrichton/curl-rust.git" }
+html5ever = "*"
+scraper = "*"
+regex = "*"
