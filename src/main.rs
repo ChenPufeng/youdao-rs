@@ -1,24 +1,20 @@
 extern crate gtk;
 extern crate glib;
 use gtk::prelude::*;
-use gtk::{TextBuffer, TextView, Entry, EntryBuffer, Button, Window, WindowType};
+use gtk::{Builder, TextBuffer, TextView, Entry, EntryBuffer, Button, Window, WindowType};
 use std::sync::mpsc::{channel, Receiver};
 use std::cell::RefCell;
 
 extern crate curl;
-//use std::io::{stdout, Write};
 use curl::easy::Easy;
 
 extern crate scraper;
 use scraper::{Html, Selector};
-//use select::document::Document;
-//use select::predicate::Name;
 
 //extern crate regex;
 //use regex::Regex;
 
 use std::thread;
-// pub use std::collections::HashMap;
 
 fn parser(html:&String) -> Vec<String> {
     let mut res = Vec::<String>::new();
@@ -30,14 +26,6 @@ fn parser(html:&String) -> Vec<String> {
         res.push(element.inner_html()); 
     }
     return res;
-/*
-    let doc = Document::from(&html[..]);
-    println!("{}", html);
-    println!("find trans-container");
-    for i in doc.find(Name("trans-container")).iter() {
-        println!("trans-container:{:?}",i.text());       //prints text content of all articles
-    };
-    */
 }
 
 fn query(word:String) -> Vec<String> {
@@ -56,19 +44,9 @@ fn query(word:String) -> Vec<String> {
     }).unwrap();
     transfer.perform().unwrap();
     }
-
     //println!("{}", easy.response_code().unwrap());
 
-    //let res = respond.clone();
     let html = String::from_utf8(respond).unwrap();
-    //println!("{:?}", html);
-    //let re = Regex::new(r" {2,}").unwrap();
-    //let mat = re.find(&html[..]).unwrap();
-    //println!("{}", mat.as_str());
-    //for mat in re.find_iter(&html[..]) {
-    //    println!("{:?}", mat);
-    //}
-
     return  parser(&html);
 }
 
@@ -77,6 +55,11 @@ fn main() {
         println!("Failed to initialize GTK.");
         return;
     }
+
+    let glade_src = include_str!("dict.glade");
+    let builder = Builder::new();
+    builder.add_from_string(glade_src).unwrap();
+/*
     let window = Window::new(WindowType::Toplevel);
     window.set_title("First GTK+ Program");
     window.set_default_size(350, 70);
@@ -93,9 +76,12 @@ fn main() {
     vbox.add(&hbox);
     vbox.add(&view);
     window.add(&vbox);
+*/
+    let window: Window = builder.get_object("window").unwrap();
+    let view: TextView = builder.get_object("textview").unwrap();
+    let edit: Entry = builder.get_object("entry").unwrap();
+    let button: Button = builder.get_object("search").unwrap();
     window.show_all();
-
-
 
     let (tx, rx) = channel();
     let (uitx, uirx) = channel();
@@ -127,10 +113,9 @@ fn main() {
             Ok(msg)=> word = msg,
             Err(err)=> return
         }
-        println!("query:#{}", word); 
         let res = query(word);
         let resstr = res.join("\n");
-        println!("res:{}", resstr);
+        println!("{}", resstr);
         // send result to channel
         tx.send(resstr).unwrap();
 
@@ -138,7 +123,6 @@ fn main() {
         glib::idle_add(receive);
         }
     });
-            //glib::idle_add(receive);
 
     gtk::main();
     let res = q.join();
