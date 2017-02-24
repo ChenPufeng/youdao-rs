@@ -1,5 +1,6 @@
 extern crate gtk;
 extern crate glib;
+extern crate gdk;
 use gtk::prelude::*;
 use gtk::{Builder, TextBuffer, TextView, Entry, EntryBuffer, Button, Window, WindowType};
 use std::sync::mpsc::{channel, Receiver};
@@ -79,30 +80,42 @@ fn main() {
 */
     let window: Window = builder.get_object("window").unwrap();
     let view: TextView = builder.get_object("textview").unwrap();
-    let edit: Entry = builder.get_object("entry").unwrap();
+    let entry: Entry = builder.get_object("entry").unwrap();
     let button: Button = builder.get_object("search").unwrap();
     window.show_all();
 
     let (tx, rx) = channel();
     let (uitx, uirx) = channel();
+    let uitx2 = uitx.clone();
     // put TextBuffer and receiver in thread local storage
     GLOBAL.with(move |global| {
         *global.borrow_mut() = Some((view.get_buffer().unwrap(), rx))
     });
 
     window.connect_delete_event(|_, _| {
-       //let empty = String::new();
-       //uitx.send(empty).unwrap();
-
         gtk::main_quit();
         Inhibit(false)
     });
 
+    entry.connect_key_release_event(move|s,evkey| {
+        let key = evkey.get_keyval();
+        if key ==  gdk::enums::key::Return || key == gdk::enums::key::KP_Enter{
+            println!("Enter");
+            let word = s.get_text().unwrap();
+            let word_rel = word.trim().to_string();
+            if !word_rel.is_empty() {
+            uitx.send(word.trim().to_string()).unwrap();
+            }
+        }
+        Inhibit(false)
+    });
+
+
     button.connect_clicked(move|_| {
-        let word = edit.get_text().unwrap();
+        let word = entry.get_text().unwrap();
         let word_rel = word.trim().to_string();
         if !word_rel.is_empty() {
-            uitx.send(word.trim().to_string()).unwrap();
+            uitx2.send(word.trim().to_string()).unwrap();
         }
     });
 
