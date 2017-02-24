@@ -1,6 +1,9 @@
 extern crate gtk;
+extern crate glib;
 use gtk::prelude::*;
 use gtk::{TextBuffer, TextView, Entry, EntryBuffer, Button, Window, WindowType};
+use std::sync::mpsc::{channel, Receiver};
+use std::cell::RefCell;
 
 extern crate curl;
 //use std::io::{stdout, Write};
@@ -74,17 +77,16 @@ fn main() {
         println!("Failed to initialize GTK.");
         return;
     }
-
     let window = Window::new(WindowType::Toplevel);
     window.set_title("First GTK+ Program");
     window.set_default_size(350, 70);
     let hbox = gtk::Box::new(gtk::Orientation::Horizontal, 4);
     let vbox = gtk::Box::new(gtk::Orientation::Vertical, 4);
-    let button = Button::new_with_label("Click me!");
+    let button = Button::new_with_label("search");
     let buffer = EntryBuffer::new(Some("hello"));
-    let viewBuffer = TextBuffer::new(None);
     let edit = Entry::new_with_buffer(&buffer);
-    let view = TextView::new_with_buffer(&viewBuffer);
+    //let viewBuffer = TextBuffer::new(None);
+    let view = TextView::new(); //_with_buffer(&viewBuffer);
     view.set_editable(false);
     hbox.add(&edit);
     hbox.add(&button);
@@ -93,27 +95,67 @@ fn main() {
     window.add(&vbox);
     window.show_all();
 
+
+
+    let (tx, rx) = channel();
+    let (uitx, uirx) = channel();
+    // put TextBuffer and receiver in thread local storage
+    GLOBAL.with(move |global| {
+        *global.borrow_mut() = Some((view.get_buffer().unwrap(), rx))
+    });
+
     window.connect_delete_event(|_, _| {
+       //let empty = String::new();
+       //uitx.send(empty).unwrap();
+
         gtk::main_quit();
         Inhibit(false)
     });
 
     button.connect_clicked(move|_| {
         let word = edit.get_text().unwrap();
-        //let q = thread::spawn(move || {
-            let res = query(word.trim().to_string());
-            //println!("QUERY:{:#?}", res);
-            let (mut start,mut end) = viewBuffer.get_bounds();
-            viewBuffer.delete(&mut start, &mut end);
-            for i in res {
-                // println!("{}", i);
-                viewBuffer.insert_at_cursor(&i[..]);
-                viewBuffer.insert_at_cursor("\n");
-            }  
-        //});
+        let word_rel = word.trim().to_string();
+        if !word_rel.is_empty() {
+            uitx.send(word.trim().to_string()).unwrap();
+        }
     });
 
+    let q = thread::spawn(move || {
+        while true {
+        let word: String;
+        match uirx.recv() {
+            Ok(msg)=> word = msg,
+            Err(err)=> return
+        }
+        println!("query:#{}", word); 
+        let res = query(word);
+        let resstr = res.join("\n");
+        println!("res:{}", resstr);
+        // send result to channel
+        tx.send(resstr).unwrap();
+
+        // receive will be run on the main thread
+        glib::idle_add(receive);
+        }
+    });
+            //glib::idle_add(receive);
+
     gtk::main();
-    //let res = q.join();
+    let res = q.join();
 }
 
+fn receive() -> glib::Continue {
+    GLOBAL.with(|global| {
+        if let Some((ref buf, ref rx)) = *global.borrow() {
+            if let Ok(text) = rx.try_recv() {
+                buf.set_text(&text);
+            }
+        }
+    });
+    glib::Continue(false)
+}
+
+// declare a new thread local storage key
+thread_local!(
+    static GLOBAL: RefCell<Option<(gtk::TextBuffer, Receiver<String>)>> = RefCell::new(None)
+);
