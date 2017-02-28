@@ -12,6 +12,11 @@ use curl::easy::Easy;
 extern crate scraper;
 use scraper::{Html, Selector};
 
+extern crate rusqlite;
+extern crate time;
+use time::Timespec;
+use rusqlite::Connection;
+
 //extern crate regex;
 //use regex::Regex;
 
@@ -21,16 +26,36 @@ fn parser(html:&String) -> Vec<String> {
     let mut res = Vec::<String>::new();
     let fragment = Html::parse_fragment(html);
     let selector = Selector::parse("div#phrsListTab div.trans-container ul li").unwrap();
+    let selector_zh = Selector::parse("div#phrsListTab div.trans-container ul p.wordGroup span.contentTitle a").unwrap();
+    let selector_mo = Selector::parse("div#authDictTrans ul li span.wordGroup").unwrap();
 
     for element in fragment.select(&selector) {
         // println!("trans-container:{:#?}", element.inner_html());
         res.push(element.inner_html()); 
     }
+
+    for element in fragment.select(&selector_zh) {
+        res.push(element.inner_html()); 
+    }
+
+    for element in fragment.select(&selector_mo) {
+        res.push(element.inner_html()); 
+    }
+
     return res;
 }
 
 fn query(word:String) -> Vec<String> {
-    let url_str: String = format!("http://dict.youdao.com/search?q={}&keyfrom=dict", word);
+    let mut w : String = String::new();
+    let ba = word.as_bytes();
+    if ba[0] > 127 {
+        for i in ba {
+            w = format!("{}%{:02X}",w, i);
+        }
+    } else {
+        w = word.clone();
+    }
+    let url_str: String = format!("http://dict.youdao.com/search?q={}&keyfrom=dict", w);
 
     let mut easy = Easy::new();
     let mut respond = Vec::new();
@@ -52,6 +77,15 @@ fn query(word:String) -> Vec<String> {
 }
 
 fn main() {
+    let conn = Connection::open("dict.db").unwrap();
+    conn.execute("CREATE TABLE youdao_tb(
+                  id              INTEGER PRIMARY KEY,
+                  word            TEXT NOT NULL,
+                  time_created    TEXT NOT NULL,
+                  time_updated    TEXT NOT NULL,
+                  trans            BLOB
+                  )", &[]).unwrap();
+
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
         return;
@@ -100,7 +134,6 @@ fn main() {
     entry.connect_key_release_event(move|s,evkey| {
         let key = evkey.get_keyval();
         if key ==  gdk::enums::key::Return || key == gdk::enums::key::KP_Enter{
-            println!("Enter");
             let word = s.get_text().unwrap();
             let word_rel = word.trim().to_string();
             if !word_rel.is_empty() {
