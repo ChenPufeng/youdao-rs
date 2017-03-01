@@ -29,18 +29,22 @@ fn parser(html:&String) -> Vec<String> {
     let selector_zh = Selector::parse("div#phrsListTab div.trans-container ul p.wordGroup span.contentTitle a").unwrap();
     let selector_mo = Selector::parse("div#authDictTrans ul li span.wordGroup").unwrap();
 
+    // web 
     for element in fragment.select(&selector) {
         // println!("trans-container:{:#?}", element.inner_html());
         res.push(element.inner_html()); 
     }
 
+    // chinese
     for element in fragment.select(&selector_zh) {
         res.push(element.inner_html()); 
     }
 
+    /* // dict
     for element in fragment.select(&selector_mo) {
         res.push(element.inner_html()); 
     }
+    */ 
 
     return res;
 }
