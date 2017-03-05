@@ -29,7 +29,7 @@ fn parser(html:&String) -> Vec<String> {
     let selector_zh = Selector::parse("div#phrsListTab div.trans-container ul p.wordGroup span.contentTitle a").unwrap();
     let selector_mo = Selector::parse("div#authDictTrans ul li span.wordGroup").unwrap();
 
-    // web 
+    // web
     for element in fragment.select(&selector) {
         // println!("trans-container:{:#?}", element.inner_html());
         res.push(element.inner_html()); 
@@ -44,7 +44,7 @@ fn parser(html:&String) -> Vec<String> {
     for element in fragment.select(&selector_mo) {
         res.push(element.inner_html());
     }
-    */ 
+    */
 
     return res;
 }
@@ -82,7 +82,7 @@ fn query(word:String) -> Vec<String> {
 
 fn main() {
     let conn = Connection::open("dict.db").unwrap();
-    conn.execute("CREATE TABLE youdao_tb(
+    conn.execute("CREATE TABLE IF NOT EXISTS youdao_tb(
                   id              INTEGER PRIMARY KEY,
                   word            TEXT NOT NULL,
                   time_created    TEXT NOT NULL,
