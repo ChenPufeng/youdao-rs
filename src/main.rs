@@ -12,10 +12,6 @@ use curl::easy::Easy;
 extern crate scraper;
 use scraper::{Html, Selector};
 
-extern crate rusqlite;
-extern crate time;
-use time::Timespec;
-use rusqlite::Connection;
 
 //extern crate regex;
 //use regex::Regex;
@@ -81,15 +77,7 @@ fn query(word:String) -> Vec<String> {
 }
 
 fn main() {
-    let conn = Connection::open("dict.db").unwrap();
-    conn.execute("CREATE TABLE IF NOT EXISTS youdao_tb(
-                  id              INTEGER PRIMARY KEY,
-                  word            TEXT NOT NULL,
-                  time_created    TEXT NOT NULL,
-                  time_updated    TEXT NOT NULL,
-                  trans            BLOB
-                  )", &[]).unwrap();
-
+    db_init();
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
         return;
