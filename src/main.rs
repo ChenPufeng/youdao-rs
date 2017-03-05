@@ -35,11 +35,11 @@ fn parser(html:&String) -> Vec<String> {
     }
 
     for element in fragment.select(&selector_zh) {
-        res.push(element.inner_html()); 
+        res.push(element.inner_html());
     }
 
     for element in fragment.select(&selector_mo) {
-        res.push(element.inner_html()); 
+        res.push(element.inner_html());
     }
 
     return res;
