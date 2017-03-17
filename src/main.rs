@@ -12,11 +12,15 @@ use curl::easy::Easy;
 extern crate scraper;
 use scraper::{Html, Selector};
 
-
+//extern crate db;
+//use self::db;
 //extern crate regex;
 //use regex::Regex;
 
 use std::thread;
+
+mod db;
+mod kugou;
 
 fn parser(html:&String) -> Vec<String> {
     let mut res = Vec::<String>::new();
@@ -77,7 +81,7 @@ fn query(word:String) -> Vec<String> {
 }
 
 fn main() {
-    db_init();
+    db::db_init();
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
         return;
