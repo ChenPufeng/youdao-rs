@@ -1,5 +1,5 @@
 extern crate curl;
-use curl::easy::Easy;
+use self::curl::easy::Easy;
 
 extern crate serde_json;
 use self::serde_json::Value;
