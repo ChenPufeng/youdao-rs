@@ -15,8 +15,10 @@ use std::thread;
 mod db;
 mod youdao;
 mod kugou;
+mod mplayer;
 
 fn main() {
+	mplayer::init();
     db::db_init();
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
