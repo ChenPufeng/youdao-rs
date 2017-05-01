@@ -18,7 +18,7 @@ mod kugou;
 mod mplayer;
 
 fn main() {
-	mplayer::init();
+	//mplayer::init();
     db::db_init();
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
@@ -93,7 +93,7 @@ fn main() {
             Ok(msg)=> word = msg,
             Err(err)=> return
         }
-        let res = youdao::query(word);
+        let res = youdao::query2(word);
         let resstr = res.join("\n");
         println!("{}", resstr);
         // send result to channel
