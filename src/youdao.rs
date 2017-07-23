@@ -88,7 +88,7 @@ fn parser2(html:&String) -> Vec<String> {
 			println!("explains:{}", element);
     	}
 			},
-			Option::None => println!("is null"),
+			Option::None => println!("web explains is null"),
 		}
 		// let explains = base["explains"].as_array().unwrap()
 
@@ -121,7 +121,7 @@ pub fn query2(word:String) -> Vec<String> {
 
     let mut easy = Easy::new();
     let mut respond = Vec::new();
-
+	// println!("request transfer");
     easy.url(&url_str).unwrap();
     {
     let mut transfer = easy.transfer();
@@ -132,7 +132,7 @@ pub fn query2(word:String) -> Vec<String> {
     }).unwrap();
     transfer.perform().unwrap();
     }
-    //println!("{}", easy.response_code().unwrap());
+    // println!("response code {}", easy.response_code().unwrap());
 
     let html = String::from_utf8(respond).unwrap();
     return  parser2(&html);
