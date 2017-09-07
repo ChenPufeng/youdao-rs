@@ -1,20 +1,22 @@
-extern crate curl;
-use self::curl::easy::Easy;
-
+extern crate reqwest;
 extern crate scraper;
-use self::scraper::{Html, Selector};
 extern crate serde_json;
+
+use self::scraper::{Html, Selector};
 use self::serde_json::Value;
 
-fn parser(html: &String) -> Vec<String> {
-    let mut res = Vec::<String>::new();
+use std::io::Read;
+
+fn parser(html: &String) -> Option<Vec<String>> {
     let fragment = Html::parse_fragment(html);
     let selector = Selector::parse("div#phrsListTab div.trans-container ul li").unwrap();
-    let selector_zh = Selector::parse("div#phrsListTab div.trans-container ul p.wordGroup \
-                                       span.contentTitle a")
-                          .unwrap();
+    let selector_zh = Selector::parse(
+        "div#phrsListTab div.trans-container ul p.wordGroup \
+                                       span.contentTitle a",
+    ).unwrap();
     let selector_mo = Selector::parse("div#authDictTrans ul li span.wordGroup").unwrap();
 
+    let mut res = Vec::<String>::new();
     // web
     for element in fragment.select(&selector) {
         // println!("trans-container:{:#?}", element.inner_html());
@@ -26,16 +28,10 @@ fn parser(html: &String) -> Vec<String> {
         res.push(element.inner_html());
     }
 
-    // // dict
-    // for element in fragment.select(&selector_mo) {
-    // res.push(element.inner_html());
-    // }
-    //
-
-    return res;
+    return Some(res);
 }
 
-pub fn query(word: String) -> Vec<String> {
+pub fn query(word: String) -> Option<Vec<String>> {
     let mut w: String = String::new();
     let ba = word.as_bytes();
     if ba[0] > 127 {
@@ -45,30 +41,32 @@ pub fn query(word: String) -> Vec<String> {
     } else {
         w = word.clone();
     }
-    let url_str: String = format!("http://dict.youdao.com/search?q={}&keyfrom=dict", w);
+    let url: String = format!("http://dict.youdao.com/search?q={}&keyfrom=dict", w);
 
-    let mut easy = Easy::new();
-    let mut respond = Vec::new();
+    let mut res = match reqwest::Client::builder()
+        .unwrap()
+        .build()
+        .unwrap()
+        .get(&url)
+        .unwrap()
+        .send() {
+        Ok(x) => x, 
+        Err(_) => {
+            return None;
+        }
+    };
 
-    easy.url(&url_str).unwrap();
-    {
-        let mut transfer = easy.transfer();
-        transfer.write_function(|data| {
-                    // save respond
-                    respond.extend_from_slice(data);
-                    Ok(data.len())
-                })
-                .unwrap();
-        transfer.perform().unwrap();
-    }
+    let mut body = String::new();
+    res.read_to_string(&mut body);
+
     // println!("{}", easy.response_code().unwrap());
 
-    let html = String::from_utf8(respond).unwrap();
-    return parser(&html);
+    let r = parser(&body);
+    return r;
 }
 
 
-fn parser2(html: &String) -> Vec<String> {
+fn parser2(html: &String) -> Option<Vec<String>> {
     let mut res = Vec::<String>::new();
 
 
@@ -94,16 +92,17 @@ fn parser2(html: &String) -> Vec<String> {
                     println!("explains:{}", element);
                 }
             }
-            Option::None => println!("is null"),
+            Option::None => {}
         }
     } else {
         println!("bad json object");
+        return None;
     }
 
-    return res;
+    return Some(res);
 }
 
-pub fn query2(word: String) -> Vec<String> {
+pub fn query2(word: String) -> Option<Vec<String>> {
     let mut w: String = String::new();
     let ba = word.as_bytes();
     if ba[0] > 127 {
@@ -113,27 +112,29 @@ pub fn query2(word: String) -> Vec<String> {
     } else {
         w = word.clone();
     }
-    let url_str: String = format!("http://fanyi.youdao.com/openapi.\
+    let url: String = format!(
+        "http://fanyi.youdao.com/openapi.\
                                    do?keyfrom=f2ec-org&key=1787962561&type=data&doctype=json&version=1.\
                                    1&q={}",
-                                  w);
+        w
+    );
 
-    let mut easy = Easy::new();
-    let mut respond = Vec::new();
-	// println!("request transfer");
-    easy.url(&url_str).unwrap();
-    {
-        let mut transfer = easy.transfer();
-        transfer.write_function(|data| {
-                    // save respond
-                    respond.extend_from_slice(data);
-                    Ok(data.len())
-                })
-                .unwrap();
-        transfer.perform().unwrap();
-    }
+    let mut res = match reqwest::Client::builder()
+        .unwrap()
+        .build()
+        .unwrap()
+        .get(&url)
+        .unwrap()
+        .send() {
+        Ok(x) => x, 
+        Err(_) => {
+            return None;
+        }
+    };
+
+    let mut body = String::new();
+    res.read_to_string(&mut body);
     // println!("{}", easy.response_code().unwrap());
 
-    let html = String::from_utf8(respond).unwrap();
-    return parser2(&html);
+    return parser2(&body);
 }

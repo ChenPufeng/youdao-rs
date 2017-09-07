@@ -1,21 +1,18 @@
 [package]
-name = "gtk-demo"
+name = "youdao"
 version = "0.1.0"
 authors = ["alen <to_alen@sina.com>"]
 
 [dependencies]
-# gtk = { git = "https://github.com/gtk-rs/gtk.git" }
-curl = { git = "https://github.com/alexcrichton/curl-rust.git" }
 html5ever = "*"
 scraper = "*"
 regex = "*"
-glib = "^0"
-gdk = "^0"
-gdk-pixbuf = "^0"
-gtk = "^0"
-cairo-rs = "^0"
-rusqlite = "*"
+glib = "*"
+gdk = "*"
+gdk-pixbuf = "*"
+gtk = "*"
+cairo-rs = "*"
 time = "*"
 serde_json = "*"
 base64 ="*"
-mpd = "*"
+reqwest = "*"
