@@ -23,21 +23,21 @@ impl ToString for RichText {
 fn parser(html: &String) -> Option<Vec<String>> {
     let div_re = match regex::Regex::new(r#"<div id="phrsListTab"[^>]*?>(.*?)</div>"#) {
         Ok(x) =>x,
-        Err(x) => {println!("{}", x); return None;},
+        Err(x) => {println!("Regex: {}", x); return None;},
     };
     let li_re = match regex::Regex::new(r"<li[^>]*?>([^<>].*?)</li>"){
         Ok(x) =>x,
-        Err(x) => {println!("{}", x); return None;},
+        Err(x) => {println!("Regex: {}", x); return None;},
     };
 
     let mut res = Vec::<String>::new();
-    for caps in div_re.captures_iter(html) {
+    for caps in div_re.captures_iter(html.trim()) {
         let lis = match caps.get(1) {
             Some(x) => x.as_str(),
             None => {println!("not found phrsListTab");return None;},
         };
-        println!("{:?}", lis);
-        for caps_li in li_re.captures_iter(lis) {
+        println!("div {:?}", lis);
+        for caps_li in li_re.captures_iter(lis.trim()) {
             println!("li: {}",
             caps_li.get(1).unwrap().as_str());
             res.push(caps_li.get(1).unwrap().as_str().to_string());
