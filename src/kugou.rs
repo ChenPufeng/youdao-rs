@@ -1,10 +1,11 @@
-extern crate base64;
-extern crate reqwest;
-extern crate serde_json as json;
+//extern crate base64;
+//extern crate reqwest;
+//extern crate serde_json as json;
 
-use self::json::Value;
+use reqwest;
+use json;
 use std::io::Read;
-use self::base64::decode;
+use base64;
 
 pub fn lyrics_download(id: &str, accesskey: &str) {
     let url: String = format!(
@@ -28,11 +29,11 @@ pub fn lyrics_download(id: &str, accesskey: &str) {
     res.read_to_string(&mut body);
 
 
-    let lrc = json::from_str::<Value>(&body[..]).unwrap();
+    let lrc = json::from_str::<json::Value>(&body[..]).unwrap();
     if lrc["status"].as_i64().unwrap() == 200 {
         println!(
             "content:{}",
-            String::from_utf8(decode(lrc["content"].as_str().unwrap()).unwrap()).unwrap()
+            String::from_utf8(base64::decode(lrc["content"].as_str().unwrap()).unwrap()).unwrap()
         );
     } else {
         println!("bad json object: {}", lrc["info"]);
@@ -69,7 +70,7 @@ pub fn lyrics_search(name: &str, msec: i32) {
     let mut body = String::new();
     res.read_to_string(&mut body);
 
-    let v = json::from_str::<Value>(&body[..]).unwrap();
+    let v = json::from_str::<json::Value>(&body[..]).unwrap();
     println!(
         "JSON: {:?} {:?} {:?} {:?} ",
         v["info"],

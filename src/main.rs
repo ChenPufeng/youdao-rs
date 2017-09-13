@@ -1,6 +1,13 @@
+extern crate base64;
+extern crate regex;
+extern crate reqwest;
+extern crate scraper;
+extern crate serde_json as json;
+
 extern crate gtk;
 extern crate glib;
 extern crate gdk;
+
 use gtk::prelude::*;
 use gtk::{Builder, TextBuffer, TextView, Entry, EntryBuffer, Button, Window, WindowType};
 use std::sync::mpsc::{channel, Receiver};
@@ -73,7 +80,7 @@ fn main() {
                 Ok(msg) => word = msg,
                 Err(err) => return,
             }
-            let res = match youdao::query2(word) {
+            let res = match youdao::query(word) {
                 Some(x) => x.join("\n"),
                 None => String::new(),
             };

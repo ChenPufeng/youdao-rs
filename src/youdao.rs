@@ -1,9 +1,8 @@
-extern crate reqwest;
-extern crate scraper;
-extern crate serde_json as json;
 
-use self::scraper::{Html, Selector};
-use self::json::Value;
+use regex;
+use scraper::{Html, Selector};
+use json;
+use reqwest;
 
 use std::io::Read;
 use std::string::ToString;
@@ -23,6 +22,26 @@ impl ToString for RichText {
 }
 
 fn parser(html: &String) -> Option<Vec<String>> {
+    let div_re = match regex::Regex::new(r#"<div id="phrsListTab"[^>]*?>(.*?)</div>"#) {
+        Ok(x) =>x,
+        Err(x) => {println!("{}", x); return None;},
+    };
+    let li_re = match regex::Regex::new(r"<li[^>]*?>([^<>].*?)</li>"){
+        Ok(x) =>x,
+        Err(x) => {println!("{}", x); return None;},
+    };
+    for caps in div_re.captures_iter(html) {
+        let lis = match caps.get(1) {
+            Some(x) => x.as_str(),
+            None => {return None;},
+        };
+        for caps_li in li_re.captures_iter(lis) {
+            println!("li: {}",
+            caps_li.get(1).unwrap().as_str());
+        }
+    }
+
+
     let fragment = Html::parse_fragment(html);
     let selector = Selector::parse("div#phrsListTab div.trans-container ul li").unwrap();
     let selector_zh = Selector::parse(
@@ -80,7 +99,7 @@ pub fn query(word: String) -> Option<Vec<String>> {
 
 fn parser2(html: &String) -> Option<Vec<String>> {
     let mut res = Vec::<String>::new();
-    let trans = json::from_str::<Value>(&html[..]).unwrap();
+    let trans = json::from_str::<json::Value>(&html[..]).unwrap();
     if trans["errorCode"].as_i64().unwrap() == 0 {
         match trans["basic"].as_object() {
             Option::Some(base) => {
