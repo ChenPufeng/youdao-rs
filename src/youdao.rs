@@ -1,6 +1,5 @@
 
 use regex;
-use scraper::{Html, Selector};
 use json;
 use reqwest;
 
@@ -34,14 +33,14 @@ fn parser(html: &String) -> Option<Vec<String>> {
     let mut res = Vec::<String>::new();
     for caps in div_re.captures_iter(html) {
         let lis = match caps.get(1) {
-            Some(x) => x.as_str().to_string(),
+            Some(x) => x.as_str(),
             None => {println!("not found phrsListTab");return None;},
         };
         println!("{:?}", lis);
-        for caps_li in li_re.captures_iter(&lis) {
+        for caps_li in li_re.captures_iter(lis) {
             println!("li: {}",
             caps_li.get(1).unwrap().as_str());
-            //res.push(caps_li.get(1).unwrap().as_str().to_string());
+            res.push(caps_li.get(1).unwrap().as_str().to_string());
         }
     }
     return Some(res);
