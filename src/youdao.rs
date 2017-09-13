@@ -22,7 +22,7 @@ impl ToString for RichText {
 
 fn parser(html: &String) -> Option<Vec<String>> {
     // FIXME match include newline strings
-    let div_re = match regex::Regex::new(r#"<div id="phrsListTab"[^>]*?>(.*?)</div>"#) {
+    let div_re = match regex::Regex::new(r#"<div id="phrsListTab"[^>]*?>(?s)(.*?)<p class="additional">"#) {
         Ok(x) =>x,
         Err(x) => {println!("Regex: {}", x); return None;},
     };
@@ -37,20 +37,10 @@ fn parser(html: &String) -> Option<Vec<String>> {
             Some(x) => x.as_str(),
             None => {println!("not found phrsListTab");return None;},
         };
-        println!("div {:?}", lis);
         for caps_li in li_re.captures_iter(lis.trim()) {
-            println!("li: {}",
-            caps_li.get(1).unwrap().as_str());
             res.push(caps_li.get(1).unwrap().as_str().to_string());
         }
     }
-    /*
-        for caps_li in li_re.captures_iter(html.trim()) {
-            println!("li: {}",
-            caps_li.get(1).unwrap().as_str());
-            res.push(caps_li.get(1).unwrap().as_str().to_string());
-        }
-    */
     return Some(res);
 }
 
