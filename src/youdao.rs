@@ -1,11 +1,26 @@
 extern crate reqwest;
 extern crate scraper;
-extern crate serde_json;
+extern crate serde_json as json;
 
 use self::scraper::{Html, Selector};
-use self::serde_json::Value;
+use self::json::Value;
 
 use std::io::Read;
+use std::string::ToString;
+
+#[derive(Debug, Default)]
+struct RichText {
+    text: String,
+    color: i32,
+    style: i32,
+    font: i32,
+}
+
+impl ToString for RichText {
+    fn to_string(&self) -> String {
+        self.text.clone()
+    }
+}
 
 fn parser(html: &String) -> Option<Vec<String>> {
     let fragment = Html::parse_fragment(html);
@@ -19,7 +34,6 @@ fn parser(html: &String) -> Option<Vec<String>> {
     let mut res = Vec::<String>::new();
     // web
     for element in fragment.select(&selector) {
-        // println!("trans-container:{:#?}", element.inner_html());
         res.push(element.inner_html());
     }
 
@@ -59,8 +73,6 @@ pub fn query(word: String) -> Option<Vec<String>> {
     let mut body = String::new();
     res.read_to_string(&mut body);
 
-    // println!("{}", easy.response_code().unwrap());
-
     let r = parser(&body);
     return r;
 }
@@ -68,15 +80,10 @@ pub fn query(word: String) -> Option<Vec<String>> {
 
 fn parser2(html: &String) -> Option<Vec<String>> {
     let mut res = Vec::<String>::new();
-
-
-    let trans = serde_json::from_str::<Value>(&html[..]).unwrap();
+    let trans = json::from_str::<Value>(&html[..]).unwrap();
     if trans["errorCode"].as_i64().unwrap() == 0 {
-        // let mut config = STANDARD;
-        // println!("content:{}", String::from_utf8(decode(lrc["content"].as_str().unwrap()).unwrap()).unwrap());
         match trans["basic"].as_object() {
             Option::Some(base) => {
-                // let explains = base["explains"].as_array().unwrap()
                 for element in base["explains"].as_array().unwrap() {
                     res.push(element.as_str().unwrap().to_string());
                     println!("explains:{}", element);
@@ -112,12 +119,21 @@ pub fn query2(word: String) -> Option<Vec<String>> {
     } else {
         w = word.clone();
     }
+    /*
+    let mut params = HashMap::new();
+    params.insert("key", "1787962561");
+    params.insert("keyfrom", "f2ec-org");
+    params.insert("type", "data");
+    params.insert("doctype", "json");
+    params.insert("version", "1.1");
+    params.insert("q", &w);
+    let url = "http://fanyi.youdao.com/openapi.do";
+    */
     let url: String = format!(
         "http://fanyi.youdao.com/openapi.\
-                                   do?keyfrom=f2ec-org&key=1787962561&type=data&doctype=json&version=1.\
-                                   1&q={}",
-        w
-    );
+         do?keyfrom=f2ec-org&key=1787962561&type=data&\
+         doctype=json&version=1.\
+         1&q={}",w);
 
     let mut res = match reqwest::Client::builder()
         .unwrap()
@@ -134,7 +150,5 @@ pub fn query2(word: String) -> Option<Vec<String>> {
 
     let mut body = String::new();
     res.read_to_string(&mut body);
-    // println!("{}", easy.response_code().unwrap());
-
     return parser2(&body);
 }

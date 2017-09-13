@@ -1,8 +1,8 @@
 extern crate base64;
 extern crate reqwest;
-extern crate serde_json;
+extern crate serde_json as json;
 
-use self::serde_json::Value;
+use self::json::Value;
 use std::io::Read;
 use self::base64::decode;
 
@@ -28,7 +28,7 @@ pub fn lyrics_download(id: &str, accesskey: &str) {
     res.read_to_string(&mut body);
 
 
-    let lrc = serde_json::from_str::<Value>(&body[..]).unwrap();
+    let lrc = json::from_str::<Value>(&body[..]).unwrap();
     if lrc["status"].as_i64().unwrap() == 200 {
         println!(
             "content:{}",
@@ -69,7 +69,7 @@ pub fn lyrics_search(name: &str, msec: i32) {
     let mut body = String::new();
     res.read_to_string(&mut body);
 
-    let v = serde_json::from_str::<Value>(&body[..]).unwrap();
+    let v = json::from_str::<Value>(&body[..]).unwrap();
     println!(
         "JSON: {:?} {:?} {:?} {:?} ",
         v["info"],
