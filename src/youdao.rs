@@ -30,37 +30,20 @@ fn parser(html: &String) -> Option<Vec<String>> {
         Ok(x) =>x,
         Err(x) => {println!("{}", x); return None;},
     };
-    for caps in div_re.captures_iter(html) {
-        let lis = match caps.get(1) {
-            Some(x) => x.as_str(),
-            None => {return None;},
-        };
-        for caps_li in li_re.captures_iter(lis) {
-            println!("li: {}",
-            caps_li.get(1).unwrap().as_str());
-        }
-    }
-
-
-    let fragment = Html::parse_fragment(html);
-    let selector = Selector::parse("div#phrsListTab div.trans-container ul li").unwrap();
-    let selector_zh = Selector::parse(
-        "div#phrsListTab div.trans-container ul p.wordGroup \
-                                       span.contentTitle a",
-    ).unwrap();
-    let selector_mo = Selector::parse("div#authDictTrans ul li span.wordGroup").unwrap();
 
     let mut res = Vec::<String>::new();
-    // web
-    for element in fragment.select(&selector) {
-        res.push(element.inner_html());
+    for caps in div_re.captures_iter(html) {
+        let lis = match caps.get(1) {
+            Some(x) => x.as_str().to_string(),
+            None => {println!("not found phrsListTab");return None;},
+        };
+        println!("{:?}", lis);
+        for caps_li in li_re.captures_iter(&lis) {
+            println!("li: {}",
+            caps_li.get(1).unwrap().as_str());
+            //res.push(caps_li.get(1).unwrap().as_str().to_string());
+        }
     }
-
-    // chinese
-    for element in fragment.select(&selector_zh) {
-        res.push(element.inner_html());
-    }
-
     return Some(res);
 }
 
