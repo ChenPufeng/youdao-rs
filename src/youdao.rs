@@ -22,20 +22,31 @@ impl ToString for RichText {
 
 fn parser(html: &String) -> Option<Vec<String>> {
     // FIXME match include newline strings
-    let div_re = match regex::Regex::new(r#"<div id="phrsListTab"[^>]*?>(?s)(.*?)<p class="additional">"#) {
-        Ok(x) =>x,
-        Err(x) => {println!("Regex: {}", x); return None;},
+    let div_re = match regex::Regex::new(
+        r#"<div id="phrsListTab"[^>]*?>(?s)(.*?)<p class="additional">"#,
+    ) {
+        Ok(x) => x,
+        Err(x) => {
+            println!("Regex: {}", x);
+            return None;
+        }
     };
-    let li_re = match regex::Regex::new(r#"<li[^>]*?>([^<>].*?)</li>"#){
-        Ok(x) =>x,
-        Err(x) => {println!("Regex: {}", x); return None;},
+    let li_re = match regex::Regex::new(r#"<li[^>]*?>([^<>].*?)</li>"#) {
+        Ok(x) => x,
+        Err(x) => {
+            println!("Regex: {}", x);
+            return None;
+        }
     };
 
     let mut res = Vec::<String>::new();
     for caps in div_re.captures_iter(html.trim()) {
         let lis = match caps.get(1) {
             Some(x) => x.as_str(),
-            None => {println!("not found phrsListTab");return None;},
+            None => {
+                println!("not found phrsListTab");
+                return None;
+            }
         };
         for caps_li in li_re.captures_iter(lis.trim()) {
             res.push(caps_li.get(1).unwrap().as_str().to_string());
@@ -132,7 +143,9 @@ pub fn query2(word: String) -> Option<Vec<String>> {
         "http://fanyi.youdao.com/openapi.\
          do?keyfrom=f2ec-org&key=1787962561&type=data&\
          doctype=json&version=1.\
-         1&q={}",w);
+         1&q={}",
+        w
+    );
 
     let mut res = match reqwest::Client::builder()
         .unwrap()

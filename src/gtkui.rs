@@ -9,7 +9,7 @@ use std::cell::RefCell;
 use std::thread;
 use youdao;
 
-pub fn run(f: fn(&str)->Option<Vec<String>>) {
+pub fn run(f: fn(&str) -> Option<Vec<String>>) {
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
         return;
@@ -66,9 +66,12 @@ pub fn run(f: fn(&str)->Option<Vec<String>>) {
                 Ok(msg) => word = msg,
                 Err(err) => return,
             }
-            let res = match youdao::query(&word) {
+            let res = match f(&word) {
                 Some(x) => x.join("\n"),
-                None => {println!("not found"); return;},
+                None => {
+                    println!("not found");
+                    return;
+                }
             };
             println!("{}", res);
             // send result to channel
