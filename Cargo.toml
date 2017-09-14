@@ -4,8 +4,6 @@ version = "0.1.0"
 authors = ["alen <to_alen@sina.com>"]
 
 [dependencies]
-html5ever = "*"
-scraper = "*"
 regex = "*"
 glib = "*"
 gdk = "*"
