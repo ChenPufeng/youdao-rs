@@ -44,7 +44,7 @@ fn parser(html: &String) -> Option<Vec<String>> {
     return Some(res);
 }
 
-pub fn query(word: String) -> Option<Vec<String>> {
+pub fn query(word: &str) -> Option<Vec<String>> {
     let mut w: String = String::new();
     let ba = word.as_bytes();
     if ba[0] > 127 {
@@ -52,7 +52,7 @@ pub fn query(word: String) -> Option<Vec<String>> {
             w = format!("{}%{:02X}", w, i);
         }
     } else {
-        w = word.clone();
+        w = word.to_string();
     }
     let url: String = format!("http://dict.youdao.com/search?q={}&keyfrom=dict", w);
 
