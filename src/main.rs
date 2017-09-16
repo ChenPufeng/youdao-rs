@@ -7,11 +7,17 @@ extern crate gtk;
 extern crate glib;
 extern crate gdk;
 
+extern crate rustyline;
+
+use rustyline::error::ReadlineError;
+use rustyline::Editor;
+
 use gtk::prelude::*;
 use gtk::{Builder, TextBuffer, TextView, Entry, EntryBuffer, Button, Window, WindowType};
 use std::sync::mpsc::{channel, Receiver};
 use std::cell::RefCell;
 use std::io::{self, Write};
+
 mod youdao;
 mod kugou;
 mod gtkui;
@@ -20,21 +26,44 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     let mut gui = false;
     if args.len() == 1 {
-        println!("Input world to continue, input Q/q to quit.");
+        println!("Ctrl+D/C to quit.");
+        let mut rl = Editor::<()>::new();
+        //if let Err(_) = rl.load_history("history.txt") {
+        //    println!("No previous history.");
+        //}
         loop {
-            let mut line = String::new();
-            let input = std::io::stdin().read_line(&mut line).expect(
-                "Failed to read line",
-            );
-            let res = match youdao::query(line.as_str()) {
-                Some(x) => x.join("\n"),
-                None => {
-                    println!("not found");
-                    return;
+            let readline = rl.readline(">> ");
+            match readline {
+                Ok(line) => {
+                    if line.len() == 0 {
+                        continue;
+                    }
+                    rl.add_history_entry(&line);
+                    let res = match youdao::query(line.as_str()) {
+                        Some(x) => x.join("\n"),
+                        None => {
+                            println!("not found");
+                            return;
+                        }
+                    };
+                    println!("{}", res);
                 }
-            };
-            println!("{}", res);
+                Err(ReadlineError::Interrupted) => {
+                    println!("CTRL-C");
+                    break;
+                }
+                Err(ReadlineError::Eof) => {
+                    println!("CTRL-D");
+                    break;
+                }
+                Err(err) => {
+                    println!("Error: {:?}", err);
+                    break;
+                }
+            }
         }
+        // rl.save_history("history.txt").unwrap();
+
         std::process::exit(0x0000);
     } else {
         for i in 1..args.len() {
