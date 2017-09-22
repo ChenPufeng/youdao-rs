@@ -41,18 +41,9 @@ pub fn lyrics_download(id: &str, accesskey: &str) {
 }
 
 pub fn lyrics_search(name: &str, msec: i32) {
-    let mut w: String = String::new();
-    let ba = name.as_bytes();
-    if ba[0] > 127 {
-        for i in ba {
-            w = format!("{}%{:02X}", w, i);
-        }
-    } else {
-        w = name.to_string();
-    }
     let url: String = format!(
         "http://lyrics.kugou.com/search?ver=1&man=yes&client=pc&keyword={}&duration={}&hash=",
-        w,
+        name,
         msec
     );
     let mut res = match reqwest::Client::builder()

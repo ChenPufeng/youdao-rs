@@ -23,7 +23,8 @@ impl ToString for RichText {
 fn parser(html: &String) -> Option<Vec<String>> {
     // FIXME match include newline strings
     let div_re = match regex::Regex::new(
-        r#"<div id="phrsListTab"[^>]*?>(?s)(.*?)<p class="additional">"#,
+        r#"<div id="phrsListTab"[^>]*?>(?s)(.*?)<div id="webTrans""#,
+        // class="additional">,
     ) {
         Ok(x) => x,
         Err(x) => {
@@ -39,33 +40,90 @@ fn parser(html: &String) -> Option<Vec<String>> {
         }
     };
 
+    // for chinese
+    let ul_re = match regex::Regex::new(r#"<ul[^>]*?>(?s)(.*?)</ul>"#) {
+        Ok(x) => x,
+        Err(x) => {
+            println!("Regex: {}", x);
+            return None;
+        }
+    };
+    let a_re = match regex::Regex::new(r#"<a[^>]*?>(?s)(.*?)</a>"#) {
+        Ok(x) => x,
+        Err(x) => {
+            println!("Regex: {}", x);
+            return None;
+        }
+    };
+    let span_re = match regex::Regex::new(r#"<span[^>]*?>(?s)([a-z.].+?)</span>"#) {
+        Ok(x) => x,
+        Err(x) => {
+            println!("Regex: {}", x);
+            return None;
+        }
+    };
+    let p_re = match regex::Regex::new(r#"<p class="wordGroup"[^>]*?>(?s)(.*?)</p>"#) {
+        Ok(x) => x,
+        Err(x) => {
+            println!("Regex: {}", x);
+            return None;
+        }
+    };
+
     let mut res = Vec::<String>::new();
     for caps in div_re.captures_iter(html.trim()) {
         let lis = match caps.get(1) {
             Some(x) => x.as_str(),
             None => {
                 println!("not found phrsListTab");
-                return None;
+                return Some(res);
             }
         };
         for caps_li in li_re.captures_iter(lis.trim()) {
             res.push(caps_li.get(1).unwrap().as_str().to_string());
+        }
+
+        for cap_p in p_re.captures_iter(lis.trim()) {
+            let a = match cap_p.get(1) {
+                Some(x) => x.as_str(),
+                None => {
+                    return Some(res);
+                }
+            };
+
+            let mut line = String::new();
+            for cap_span in span_re.captures_iter(a.trim()) {
+                let ref mut line_ref = line;
+                match cap_span.get(1) {
+                    Some(x) => {
+                        line_ref.push_str(x.as_str());
+                        line_ref.push_str(" ");
+                    },
+                    None => {}
+                }
+            }
+            for cap_a in a_re.captures_iter(a.trim()) {
+                let ref mut line_ref = line;
+                match cap_a.get(1) {
+                    Some(x) => {
+                        if !line_ref.ends_with(". ") {
+                            line_ref.push_str("; ");
+                        }
+                        line_ref.push_str(x.as_str());
+                    },
+                    None => {}
+                };
+            }
+            if line.len() > 0 {
+                res.push(line);
+            }
         }
     }
     return Some(res);
 }
 
 pub fn query(word: &str) -> Option<Vec<String>> {
-    let mut w: String = String::new();
-    let ba = word.as_bytes();
-    if ba[0] > 127 {
-        for i in ba {
-            w = format!("{}%{:02X}", w, i);
-        }
-    } else {
-        w = word.to_string();
-    }
-    let url: String = format!("http://dict.youdao.com/search?q={}&keyfrom=dict", w);
+    let url: String = format!("http://dict.youdao.com/search?q={}&keyfrom=dict", word);
 
     let mut res = match reqwest::Client::builder()
         .unwrap()
@@ -120,15 +178,6 @@ fn parser2(html: &String) -> Option<Vec<String>> {
 }
 
 pub fn query2(word: String) -> Option<Vec<String>> {
-    let mut w: String = String::new();
-    let ba = word.as_bytes();
-    if ba[0] > 127 {
-        for i in ba {
-            w = format!("{}%{:02X}", w, i);
-        }
-    } else {
-        w = word.clone();
-    }
     /*
     let mut params = HashMap::new();
     params.insert("key", "1787962561");
@@ -144,7 +193,7 @@ pub fn query2(word: String) -> Option<Vec<String>> {
          do?keyfrom=f2ec-org&key=1787962561&type=data&\
          doctype=json&version=1.\
          1&q={}",
-        w
+        word
     );
 
     let mut res = match reqwest::Client::builder()

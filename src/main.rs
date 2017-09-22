@@ -26,13 +26,13 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     let mut gui = false;
     if args.len() == 1 {
-        println!("Ctrl+D/C to quit.");
+        println!("youdao 0.0.1 to_alen@sina.com");
         let mut rl = Editor::<()>::new();
         //if let Err(_) = rl.load_history("history.txt") {
         //    println!("No previous history.");
         //}
         loop {
-            let readline = rl.readline(">> ");
+            let readline = rl.readline("> ");
             match readline {
                 Ok(line) => {
                     if line.len() == 0 {
@@ -49,11 +49,9 @@ fn main() {
                     println!("{}", res);
                 }
                 Err(ReadlineError::Interrupted) => {
-                    println!("CTRL-C");
                     break;
                 }
                 Err(ReadlineError::Eof) => {
-                    println!("CTRL-D");
                     break;
                 }
                 Err(err) => {
