@@ -61,6 +61,11 @@ fn parser(html: &String) -> Option<Vec<String>> {
     };
     // get result content
     let a_re = match regex::Regex::new(r#"<a[^>]*?>(?s)(.*?)</a>"#) {
+        Ok(x) => x, Err(x) => { println!("Regex: {}", x); return None;
+        }
+    };
+    // the characteristic or property of a certain word
+    let span_re = match regex::Regex::new(r#"<span[^>]*?>(?s)([a-z.].+?)</span>"#) {
         Ok(x) => x,
         Err(x) => {
             println!("Regex: {}", x);
@@ -68,7 +73,7 @@ fn parser(html: &String) -> Option<Vec<String>> {
         }
     };
     // get pronounce for english
-    let span_re = match regex::Regex::new(r#"<span[^>]*?>(?s)([a-z.].+?)</span>"#) {
+    let phonetic_re = match regex::Regex::new(r#"<span class="pronounce"[^>]*?>(?s)(.+?)<span class="phonetic">(.+?)</span>.*?</span>"#) {
         Ok(x) => x,
         Err(x) => {
             println!("Regex: {}", x);
@@ -86,7 +91,7 @@ fn parser(html: &String) -> Option<Vec<String>> {
 
     let mut res = Vec::<String>::new();
     for caps in div_re.captures_iter(html.trim()) {
-        let lis = match caps.get(1) {
+        let div = match caps.get(1) {
             Some(x) => x.as_str(),
             None => {
                 println!("not found phrsListTab");
@@ -94,20 +99,40 @@ fn parser(html: &String) -> Option<Vec<String>> {
             }
         };
 
-        for caps_keyword in keyword_re.captures_iter(lis.trim()) {
+        let mut keyword = String::new();
+        for caps_keyword in keyword_re.captures_iter(div.trim()) {
+            let ref mut keyword_ref = keyword;
             match caps_keyword.get(1) {
                 Some(x) => {
                     let mut line = String::new();
                     line.push_str("  ");
-                    line.push_str(x.as_str());
-                    res.push(Colour::White.paint(line).to_string());
+                    line.push_str(&Colour::White.underline().paint(x.as_str()).to_string());
+                    keyword_ref.push_str(&line);
                     break;
                 },
                 None => {},
             };
         }
+        for caps_phonetic in phonetic_re.captures_iter(div.trim()) {
+            let ref mut keyword_ref = keyword;
+            match caps_phonetic.get(1) {
+                Some(x) => {
+                    keyword_ref.push_str(" ");
+                    keyword_ref.push_str(&Colour::White.paint(x.as_str().trim()).to_string());
+                },
+                None => {},
+            };
+            match caps_phonetic.get(2) {
+                Some(x) => {
+                    keyword_ref.push_str(" ");
+                    keyword_ref.push_str(&Colour::RGB(200,200,200).paint(x.as_str().trim()).to_string());
+                },
+                None => {},
+            };
+        }
+        res.push(keyword);
 
-        for caps_li in li_re.captures_iter(lis.trim()) {
+        for caps_li in li_re.captures_iter(div.trim()) {
             match caps_li.get(1) {
                 Some(x) => {
                     let mut line = String::new();
@@ -120,7 +145,7 @@ fn parser(html: &String) -> Option<Vec<String>> {
             };
         }
 
-        for cap_p in p_re.captures_iter(lis.trim()) {
+        for cap_p in p_re.captures_iter(div.trim()) {
             let a = match cap_p.get(1) {
                 Some(x) => x.as_str(),
                 None => {
