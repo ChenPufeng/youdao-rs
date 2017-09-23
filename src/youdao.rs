@@ -23,7 +23,7 @@ impl ToString for RichText {
 }
 
 fn parser(html: &String) -> Option<Vec<String>> {
-    // FIXME match include newline strings
+    // get results contents 
     let div_re = match regex::Regex::new(
         r#"<div id="phrsListTab"[^>]*?>(?s)(.*?)<div id="webTrans""#,
         // class="additional">,
@@ -34,6 +34,7 @@ fn parser(html: &String) -> Option<Vec<String>> {
             return None;
         }
     };
+    // get translate result
     let li_re = match regex::Regex::new(r#"<li[^>]*?>([^<>].*?)</li>"#) {
         Ok(x) => x,
         Err(x) => {
@@ -41,7 +42,7 @@ fn parser(html: &String) -> Option<Vec<String>> {
             return None;
         }
     };
-
+    // get search keyword 
     let keyword_re = match regex::Regex::new(r#"<span class="keyword"[^>]*?>(?s)(.+?)</span>"#) {
         Ok(x) => x,
         Err(x) => {
@@ -50,7 +51,7 @@ fn parser(html: &String) -> Option<Vec<String>> {
         }
     };
 
-    // for chinese
+    // for chinese; get translate result
     let ul_re = match regex::Regex::new(r#"<ul[^>]*?>(?s)(.*?)</ul>"#) {
         Ok(x) => x,
         Err(x) => {
@@ -58,6 +59,7 @@ fn parser(html: &String) -> Option<Vec<String>> {
             return None;
         }
     };
+    // get result content
     let a_re = match regex::Regex::new(r#"<a[^>]*?>(?s)(.*?)</a>"#) {
         Ok(x) => x,
         Err(x) => {
@@ -65,6 +67,7 @@ fn parser(html: &String) -> Option<Vec<String>> {
             return None;
         }
     };
+    // get pronounce for english
     let span_re = match regex::Regex::new(r#"<span[^>]*?>(?s)([a-z.].+?)</span>"#) {
         Ok(x) => x,
         Err(x) => {
@@ -72,6 +75,7 @@ fn parser(html: &String) -> Option<Vec<String>> {
             return None;
         }
     };
+    // get chinese result content
     let p_re = match regex::Regex::new(r#"<p class="wordGroup"[^>]*?>(?s)(.*?)</p>"#) {
         Ok(x) => x,
         Err(x) => {
@@ -104,7 +108,16 @@ fn parser(html: &String) -> Option<Vec<String>> {
         }
 
         for caps_li in li_re.captures_iter(lis.trim()) {
-            res.push(caps_li.get(1).unwrap().as_str().to_string());
+            match caps_li.get(1) {
+                Some(x) => {
+                    let mut line = String::new();
+                    line.push_str("  ");
+                    line.push_str(x.as_str());
+                    res.push(Colour::Cyan.paint(line).to_string());
+                    break;
+                },
+                None => {},
+            };
         }
 
         for cap_p in p_re.captures_iter(lis.trim()) {
@@ -131,7 +144,7 @@ fn parser(html: &String) -> Option<Vec<String>> {
                 let ref mut line_ref = line;
                 match cap_a.get(1) {
                     Some(x) => {
-                        if !line_ref.ends_with(". ") {
+                        if !line_ref.ends_with(". ") && !line_ref.ends_with("  ") {
                             line_ref.push_str("; ");
                         }
                         line_ref.push_str(x.as_str());
