@@ -2,6 +2,7 @@ extern crate base64;
 extern crate regex;
 extern crate reqwest;
 extern crate serde_json as json;
+extern crate ansi_term;
 
 extern crate gtk;
 extern crate glib;

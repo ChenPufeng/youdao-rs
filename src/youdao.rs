@@ -2,9 +2,11 @@
 use regex;
 use json;
 use reqwest;
+use ansi_term::Colour;
 
 use std::io::Read;
 use std::string::ToString;
+
 
 #[derive(Debug, Default)]
 struct RichText {
@@ -33,6 +35,14 @@ fn parser(html: &String) -> Option<Vec<String>> {
         }
     };
     let li_re = match regex::Regex::new(r#"<li[^>]*?>([^<>].*?)</li>"#) {
+        Ok(x) => x,
+        Err(x) => {
+            println!("Regex: {}", x);
+            return None;
+        }
+    };
+
+    let keyword_re = match regex::Regex::new(r#"<span class="keyword"[^>]*?>(?s)(.+?)</span>"#) {
         Ok(x) => x,
         Err(x) => {
             println!("Regex: {}", x);
@@ -79,6 +89,20 @@ fn parser(html: &String) -> Option<Vec<String>> {
                 return Some(res);
             }
         };
+
+        for caps_keyword in keyword_re.captures_iter(lis.trim()) {
+            match caps_keyword.get(1) {
+                Some(x) => {
+                    let mut line = String::new();
+                    line.push_str("  ");
+                    line.push_str(x.as_str());
+                    res.push(Colour::White.paint(line).to_string());
+                    break;
+                },
+                None => {},
+            };
+        }
+
         for caps_li in li_re.captures_iter(lis.trim()) {
             res.push(caps_li.get(1).unwrap().as_str().to_string());
         }
@@ -92,6 +116,7 @@ fn parser(html: &String) -> Option<Vec<String>> {
             };
 
             let mut line = String::new();
+            line.push_str("  ");
             for cap_span in span_re.captures_iter(a.trim()) {
                 let ref mut line_ref = line;
                 match cap_span.get(1) {
@@ -100,7 +125,7 @@ fn parser(html: &String) -> Option<Vec<String>> {
                         line_ref.push_str(" ");
                     },
                     None => {}
-                }
+                };
             }
             for cap_a in a_re.captures_iter(a.trim()) {
                 let ref mut line_ref = line;
@@ -115,7 +140,7 @@ fn parser(html: &String) -> Option<Vec<String>> {
                 };
             }
             if line.len() > 0 {
-                res.push(line);
+                res.push(Colour::Cyan.paint(line).to_string());
             }
         }
     }
