@@ -73,7 +73,7 @@ fn parser(html: &String) -> Option<Vec<String>> {
         }
     };
     // get pronounce for english
-    let phonetic_re = match regex::Regex::new(r#"<span class="pronounce"[^>]*?>(?s)(.+?)<span class="phonetic">(.+?)</span>.*?</span>"#) {
+    let phonetic_re = match regex::Regex::new(r#"<span class="pronounce"[^>]*?>(?s)([^<>]+?)<span class="phonetic">(?s)([^<>]+?)</span>"#) {
         Ok(x) => x,
         Err(x) => {
             println!("Regex: {}", x);
